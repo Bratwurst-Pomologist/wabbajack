@@ -34,7 +34,7 @@ minetest.register_tool(modname..":wabbajack_wand", {
         local player_name = user:get_player_name()
         
         -- Überprüfe ob der Spieler einen Diamantblock hat
-        if not minetest.get_inventory({type="player", name=player_name}):contains_item("main", "default:diamond_block") then
+        if not minetest.get_inventory({type="player", name=player_name}):contains_item("main", "default:diamondblock") then
             minetest.chat_send_player(player_name, "Du benötigst einen Diamantblock, um den Zauber zu wirken.")
             return
         end
@@ -51,7 +51,7 @@ minetest.register_tool(modname..":wabbajack_wand", {
                 transform_to_random_animal(target)
 
                 -- Entferne einen Diamantblock aus dem Inventar des Spielers
-                minetest.get_inventory({type="player", name=player_name}):remove_item("main", "default:diamond_block")
+                minetest.get_inventory({type="player", name=player_name}):remove_item("main", "default:diamondblock")
             else
                 minetest.chat_send_player(player_name, "Das Ziel ist zu weit entfernt oder nicht gültig.")
             end

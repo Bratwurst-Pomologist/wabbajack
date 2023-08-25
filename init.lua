@@ -1,5 +1,6 @@
 -- Zauberstab Mod für Minetest
 
+modname = minetest.get_current_modname()
 local function transform_to_random_animal(entity)
     local animals = {"chicken", "cow", "sheep"} -- Namen der Tiere aus der "mobs_animal" Mod
     local random_animal = animals[math.random(#animals)]
@@ -26,9 +27,9 @@ local function transform_to_random_animal(entity)
 end
 
 -- Registriere den Zauberstab
-minetest.register_tool("mod_name:zauberstab", {
-    description = "Zauberstab",
-    inventory_image = "zauberstab.png", -- Füge das Bild deines Zauberstabs hinzu
+minetest.register_tool(modname..":wabbajack_wand", {
+    description = "Wabbajack Wand",
+    inventory_image = "wabbajack_wand.png", -- Füge das Bild deines Zauberstabs hinzu
     on_use = function(itemstack, user, pointed_thing)
         local player_name = user:get_player_name()
         
@@ -62,7 +63,7 @@ minetest.register_tool("mod_name:zauberstab", {
 
 -- Füge Crafting-Rezept für den Zauberstab hinzu
 minetest.register_craft({
-    output = "mod_name:zauberstab",
+    output = modname..":wabbajack_wand",
     recipe = {
         {"", "default:diamond", ""},
         {"", "default:stick", ""},

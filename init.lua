@@ -1,8 +1,45 @@
 modname = minetest.get_current_modname()
 
+local config = Settings(minetest.get_modpath(modname).."/wabbajack.conf")
+local wj_radius = tonumber(config:get("wj_radius")) or 3
+
+local function item_enchant(entity, user)
+   local drop_items = math.random(10, 25)
+   local pos_2 = entity:get_pos()
+   --[[if entity:get_pos() ~= nil then
+        local pos = entity:get_pos()
+        else local pos = pos
+        end]]
+   if drop_items > 9 then
+   minetest.chat_send_player(user:get_player_name(), "drop_items is set to "..drop_items)
+   end
+   local div_basis = drop_items
+   local drop_items_2 = drop_items
+    local item_names = {"default:diamond", "default:gold_ingot", "default:apple"}
+    
+    local function drop_item()
+        local pos = entity:get_pos()
+        local sounds = dofile(minetest.get_modpath(modname).."/drop_sound_conf.lua")
+        local randomSound = sounds[math.random(1, #sounds)]
+        local random_item = item_names[math.random(1, #item_names)]
+        minetest.add_item(pos or pos_2, random_item)
+        
+        drop_items_2 = drop_items_2 - 1
+        if drop_items_2 > 0 then
+            local drop_interval = 10 / div_basis -- Abstand basierend auf erster Zahl von drop_items
+            minetest.chat_send_player(user:get_player_name(), "drop_interval is set to "..drop_interval)
+            minetest.sound_play(randomSound, {pos = pos, gain = 1.0, max_hear_distance = 32})
+            minetest.after(drop_interval, drop_item)
+        end
+    end
+    drop_item()
+end
+
+
+
 local function transform_to_random_animal(entity)
     local animals = {
-        {texture = "mobs_kitten_black.png", mesh = "mobs_kitten.b3d"},
+        {texture = "mobs_kitten_black(1).png", mesh = "mobs_kitten.b3d"},
         {texture = "mobs_kitten_ginger.png", mesh = "mobs_kitten.b3d"},
         {texture = "mobs_kitten_sandy.png", mesh = "mobs_kitten.b3d"},
         {texture = "mobs_kitten_splotchy.png", mesh = "mobs_kitten.b3d"},
@@ -54,37 +91,24 @@ local function transform_to_random_animal(entity)
                 entity:set_properties(original_properties)
                 
                 -- Reset the enchanted flag
-                entity:get_luaentity().enchanted = false
-                
+                 local lua_entity = entity:get_luaentity()
+                  if lua_entity then
+                    entity:get_luaentity().enchanted = false
+                  end
+                  
                 entity:set_pos(original_pos)  -- Porte das Mob zurück zum ursprünglichen Standort
             end
         end)
     end
 end
 
-local function apply_explosion_effect(pos)
-    -- Erzeuge eine Explosion an der angegebenen Position
-    minetest.add_particle({
-        pos = pos,
-        velocity = {x = 0, y = 0, z = 0},
-        acceleration = {x = 0, y = 0, z = 0},
-        expirationtime = 0.1,
-        size = 10,
-        collisiondetection = true,
-        collision_removal = true,
-        object_collision = true,
-        vertical = false,
-        texture = "fire_basic_flame.png",
-    })
-end
-
 minetest.register_tool(modname..":wabbajack_wand", {
     description = "Wabbajack Wand",
     inventory_image = "wabbajack_wand.png",
     -- on_use start
-    on_use = function(itemstack, user, pointed_thing)
+    on_use = function(itemstack, user,  pointed_thing)
       -- auswahl zufälliger Effekt 
-      local random_effect = math.random(1,2)
+      local random_effect = math.random(1,3)
       if random_effect == 1 then
         
         local player_name = user:get_player_name()
@@ -116,19 +140,28 @@ minetest.register_tool(modname..":wabbajack_wand", {
         else
             minetest.chat_send_player(player_name, "Du musst einen Spieler oder Mob auswählen.")
         end
-        else
         -- 2. Effekt
+        elseif random_effect == 2 then
         if pointed_thing.type == "node" then
         local target_pos = pointed_thing.under
-        apply_explosion_effect(target_pos)
-    elseif pointed_thing.type == "object" then
+        tnt.boom(target_pos, {radius = 3})
+        elseif pointed_thing.type == "object" then
         local target_pos = pointed_thing.ref:get_pos()
-        apply_explosion_effect(target_pos)
-    end
+        tnt.boom(target_pos, {radius = wj_radius})
         end
+        -- 3. Effekt 
+        else
+        
+        if pointed_thing.type == "object" then
+        local target = pointed_thing.ref
+        item_enchant(target, user)
+    end
+    return itemstack
+    end
+    -- Ende des random Effekts
     end,
-    -- on_use end
-})
+    -- on_use end 
+ })
 
 minetest.register_craft({
     output = modname..":wabbajack_wand",
@@ -138,76 +171,3 @@ minetest.register_craft({
         {"", "default:diamond", ""},
     },
 })
-
-print("[MOD] Zauberstab Mod geladen")
-
-
--------
-
---[[
--- Registrierung des Wabbajack-Items
-minetest.register_craftitem("wabbajack:wabbajack", {
-    description = "Wabbajack",
-    inventory_image = "wabbajack.png",
-    on_use = function(itemstack, user, pointed_thing)
-        -- Zufälligen Effekt auswählen
-        local random_effect = math.random(1, 3)  -- Zum Beispiel 3 mögliche Effekte
-        if random_effect == 1 then
-            -- Führe den Effekt 1 aus
-        elseif random_effect == 2 then
-            -- Führe den Effekt 2 aus
-        else
-            -- Führe den Effekt 3 aus
-        end
-        itemstack:take_item()  -- Verbrauche den Wabbajack nach Benutzung
-        return itemstack
-    end,
-})
-
--- Registrierung der Rezept für den Wabbajack
-minetest.register_craft({
-    output = "wabbajack:wabbajack",
-    recipe = {
-        {"default:diamond", "default:gold_ingot", "default:diamond"},
-        {"default:gold_ingot", "default:stick", "default:gold_ingot"},
-        {"default:diamond", "default:gold_ingot", "default:diamond"},
-    },
-})
-]]
-
---[[-- wabbajack.lua
-
--- ... (vorheriger Code)
-
--- Funktion für den Explosionseffekt
-local function apply_explosion_effect(pos)
-    -- Erzeuge eine Explosion an der angegebenen Position
-    minetest.add_particle({
-        pos = pos,
-        velocity = {x = 0, y = 0, z = 0},
-        acceleration = {x = 0, y = 0, z = 0},
-        expirationtime = 0.1,
-        size = 10,
-        collisiondetection = true,
-        collision_removal = true,
-        object_collision = true,
-        vertical = false,
-        texture = "fire_basic_flame.png",
-    })
-end
-
--- Im on_use-Event den Explosionseffekt anwenden
-on_use = function(itemstack, user, pointed_thing)
-    if pointed_thing.type == "node" then
-        local target_pos = pointed_thing.under
-        apply_explosion_effect(target_pos)
-    elseif pointed_thing.type == "object" then
-        local target_pos = pointed_thing.ref:get_pos()
-        apply_explosion_effect(target_pos)
-    end
-    itemstack:take_item()  -- Verbrauche den Wabbajack nach Benutzung
-    return itemstack
-end
-
--- ... (weiterer Code)
-]]
